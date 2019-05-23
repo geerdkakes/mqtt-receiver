@@ -12,6 +12,7 @@ const fs = require('fs');
  * -o output logfile name to write to
  * -d output data file to write to
  * -t topic to subscribe to ("#" if omitted)
+ * -z print out time difference with last message
  * -v <level> for verbose output
  */
 
@@ -36,6 +37,7 @@ var file_log = (typeof args.o === 'undefined' || args.o === null) ? null : args.
 var file_data = (typeof args.d === 'undefined' || args.d === null) ? null : args.d;
 var topic = (typeof args.t === 'undefined' || args.t === null) ? "#" : args.t;
 var verbose = (typeof args.v === 'undefined' || args.v === null) ? 0 : args.v;
+var timedif = (typeof args.z === 'undefined' || args.z === null) ? 0 : 1;
 
 var connected = false;
 if (verbose) {
@@ -46,7 +48,7 @@ if (verbose) {
 var client  = mqtt.connect('mqtt://'+mqtt_hostname,
                            mqtt_options
                            );
-
+var last_timestamp;
 var fd_log = null;
 var fd_data = null;
 
@@ -106,16 +108,23 @@ client.on("error", function(error){
 //handle incoming messages
 client.on('message',function(topic, message, packet){
     // console.log("incomming message with sendtime: " + sendtime + " and message: " + message);
-    fs.write(fd_log, Date.now().valueOf() + "|" + topic + "|\n",function postWrite(errWrite, written, string){
+    current_timestamp = Date.now().valueOf();
+    var printdif="";
+    if (timedif) {
+      printdif = ":" + (current_timestamp-last_timestamp);
+    }
+    fs.write(fd_log, current_timestamp + printdif +  ":" + topic + ":\n",function postWrite(errWrite, written, string){
         if (errWrite) {
             console.error("Error writing log data");
         }
     });
+    last_timestamp = current_timestamp;
     if (fd_data) {
         fs.write(fd_data, message,function postWrite(errWrite, written, string){
             if (errWrite) {
                 console.error("Error writing message data to: " + file_data);
             }
+            process.exit(1);
         });
     }
 });
