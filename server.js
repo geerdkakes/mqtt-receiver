@@ -2,9 +2,7 @@ var mqtt=require('mqtt');
 const args = require('minimist')(process.argv.slice(2));
 var nodeCleanup = require('node-cleanup');
 const fs = require('fs');
-var KEY = __dirname + '/client_key.pem';
-var CERT = __dirname + '/client_certificate.pem';
-var CA = __dirname + '/ca_certificate.pem';
+
 /*
  * -h url (if ommited mqtt://localhost is used)
  * -p port (if ommited port 1883 is used)
@@ -15,6 +13,10 @@ var CA = __dirname + '/ca_certificate.pem';
  * -d output data file to write to
  * -t topic to subscribe to ("#" if omitted)
  * -z print out time difference with last message
+ * -c Certificate file name
+ * -k Private key file name
+ * -r Root certificate file name
+ * -a reject unauthorised connection true or false
  * -v <level> for verbose output
  * 
  * When using TLS make sure the CA certificate is known. E.g. by
@@ -35,11 +37,12 @@ var mqtt_options = {
     password: (typeof args.s === 'undefined' || args.s === null) ? "passwd" : args.s,
     port: (typeof args.p === 'undefined' || args.p === null) ? 1883 : args.p,
     clean:false,
-    key: fs.readFileSync(KEY),
-    cert: fs.readFileSync(CERT),
-    rejectUnauthorized : true,
-    ca: fs.readFileSync(CA)
 };
+
+mqtt_options.key = (typeof args.k === 'undefined' || args.k === null) ? null : fs.readFileSync(args.k);
+mqtt_options.cert = (typeof args.c === 'undefined' || args.c === null) ? null : fs.readFileSync(args.c);
+mqtt_options.ca = (typeof args.r === 'undefined' || args.r === null) ? null : fs.readFileSync(args.r);
+mqtt_options.rejectUnauthorized = (typeof args.a === 'undefined' || args.a === null || args.a === 'false') ? false : true;
 
 var message_options = {
     retain:false,

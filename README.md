@@ -16,14 +16,26 @@ run the app with:
 node server.js -u user -s passwd -h localhost
 ```
 the flags stand for:
- * -h hostname (if ommited localhost is used)
- * -p port (if ommited port 1883 is used)
- * -u user
- * -s passwd
- * -o output file to write output to (if ommited stdout is used)
- * -d data file to write messages to
- * -t topic to subscribe to
+ * -h <hostname> (if ommited mqtt://localhost is used)
+ * -p <port> (if ommited port 1883 is used)
+ * -u <user>
+ * -s <passwd>
+ * -o <output_file> file to write message info to (if ommited stdout is used)
+ * -d <data_file> file to write message data to
+ * -t <topic> to subscribe to (use # as a wildcard for all)
+ * -q <qos_option> (0 if ommitted)
+ * -t topic to subscribe to ("#" if omitted)
+ * -z <true:flase> print out time difference with last message
+ * -c <Certificate_file> Certificate for tls authentication name
+ * -k <Private_key_file> Private key file name for tls authentication
+ * -r <Root_certificate_file> Root Certificate file name
+ * -a <true:false> reject unauthorised connection true or false
+ * -v <level> for verbose output
 
+example usage:
+```
+node server.js -u username -s 'password' -v 2 -t '#' -z true -h mqtts://localhost -p 8883 -k client_key.pem -c client_certificate.pem -r ca_certificate.pem -a true
+```
 
 ## Optional using docker
 
