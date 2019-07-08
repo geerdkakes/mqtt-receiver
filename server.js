@@ -2,9 +2,11 @@ var mqtt=require('mqtt');
 const args = require('minimist')(process.argv.slice(2));
 var nodeCleanup = require('node-cleanup');
 const fs = require('fs');
-
+var KEY = __dirname + '/client_key.pem';
+var CERT = __dirname + '/client_certificate.pem';
+var CA = __dirname + '/ca_certificate.pem';
 /*
- * -h hostname (if ommited localhost is used)
+ * -h url (if ommited mqtt://localhost is used)
  * -p port (if ommited port 1883 is used)
  * -q qos_option (0 if ommitted)
  * -u user
@@ -14,19 +16,30 @@ const fs = require('fs');
  * -t topic to subscribe to ("#" if omitted)
  * -z print out time difference with last message
  * -v <level> for verbose output
+ * 
+ * When using TLS make sure the CA certificate is known. E.g. by
+ * specifying the path wit an environment variable:
+ * 
+ * export NODE_EXTRA_CA_CERTS=/Users/geerd/Developer/geoserver-k8s/etc/ca_certificate.pem
+ * 
  */
 
  // when running on the cluster with rabbitmq use "rabbitmq.default.svc.appfactory.local"
  // for the hostname
 
-var mqtt_hostname = (typeof args.h === 'undefined' || args.h === null) ? "localhost" : args.h;
+var mqtt_url = (typeof args.h === 'undefined' || args.h === null) ? "mqtt://localhost" : args.h;
 
 var mqtt_options = {
     clientId: "mqttjs01",
     username: (typeof args.u === 'undefined' || args.u === null) ? "testuser" : args.u,
     password: (typeof args.s === 'undefined' || args.s === null) ? "passwd" : args.s,
     port: (typeof args.p === 'undefined' || args.p === null) ? 1883 : args.p,
-    clean:false};
+    clean:false,
+    key: fs.readFileSync(KEY),
+    cert: fs.readFileSync(CERT),
+    rejectUnauthorized : true,
+    ca: fs.readFileSync(CA)
+};
 
 var message_options = {
     retain:false,
@@ -41,11 +54,11 @@ var timedif = (typeof args.z === 'undefined' || args.z === null) ? 0 : 1;
 
 var connected = false;
 if (verbose) {
-    console.log("Connecting to " + mqtt_hostname);
+    console.log("Connecting to " + mqtt_url);
     console.log("using options:");
     console.log(mqtt_options);
 }
-var client  = mqtt.connect('mqtt://'+mqtt_hostname,
+var client  = mqtt.connect(mqtt_url,
                            mqtt_options
                            );
 var last_timestamp;
