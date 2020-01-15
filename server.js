@@ -2,7 +2,8 @@ var mqtt=require('mqtt');
 const args = require('minimist')(process.argv.slice(2));
 var nodeCleanup = require('node-cleanup');
 const fs = require('fs');
-
+var port;
+var secure = false;
 /*
  * -h url (if ommited mqtt://localhost is used)
  * -p port (if ommited port 1883 is used)
@@ -18,6 +19,7 @@ const fs = require('fs');
  * -r Root certificate file name
  * -a reject unauthorised connection true or false
  * -v <level> for verbose output
+ * -i <client_id>
  * 
  * When using TLS make sure the CA certificate is known. E.g. by
  * specifying the path wit an environment variable:
@@ -30,12 +32,28 @@ const fs = require('fs');
  // for the hostname
 
 var mqtt_url = (typeof args.h === 'undefined' || args.h === null) ? "mqtt://localhost" : args.h;
+var client_id = (typeof args.i === 'undefined' || args.i === null) ? "mqttjs02uni" : args.i;
+
+if (mqtt_url.substring(0,5) === "mqtts") {
+    secure = true;
+ }
+
+if (typeof args.p === 'undefined' || args.p === null) {
+    // no port specified, we guess the port
+    if (secure) {
+        port = 8883;
+    } else {
+        port = 1883;
+    }
+} else {
+    port = args.p;
+}
 
 var mqtt_options = {
-    clientId: "mqttjs01",
+    clientId: client_id,
     username: (typeof args.u === 'undefined' || args.u === null) ? "testuser" : args.u,
     password: (typeof args.s === 'undefined' || args.s === null) ? "passwd" : args.s,
-    port: (typeof args.p === 'undefined' || args.p === null) ? 1883 : args.p,
+    port: port,
     clean:false,
 };
 
@@ -123,7 +141,9 @@ client.on("error", function(error){
 
 //handle incoming messages
 client.on('message',function(topic, message, packet){
-    // console.log("incomming message with sendtime: " + sendtime + " and message: " + message);
+    if (verbose >= 2 ) {
+        console.log("incomming message with sendtime: " + sendtime + " and message: " + message);
+    }
     current_timestamp = Date.now().valueOf();
     var printdif="";
     if (timedif) {
