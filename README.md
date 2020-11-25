@@ -1,4 +1,4 @@
-# mqtt-delay
+# mqtt-receiver
 
 This app can be used to test the delay to a mqtt server with different payload sizes and timing intervals. The app can be build into a container or run from the command line.
 
